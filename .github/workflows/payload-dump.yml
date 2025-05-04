@@ -8,43 +8,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🛎️ 检出代码
+      - name: 🛎️ Checkout code
         uses: actions/checkout@v3
 
-      - name: 🧰 安装依赖工具
+      - name: 🧰 Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip curl
 
-      - name: 💾 下载文件（保留扩展名并写入环境） 
+      - name: 💾 Download file and persist name
         env:
           URL: ${{ secrets.URL }}
         run: |
-          # 提取文件名
-          FILENAME="${URL##*/}"
-          echo "⬇️  Downloading from $URL → $FILENAME"
-          curl -L "$URL" -o "$FILENAME"
+          # 提取 URL 末尾的文件名（含扩展名）
+          FILENAME="${URL##*/}"  
+          echo "⬇️ Downloading $URL → $FILENAME"
+          curl -L "$URL" -o "$FILENAME"        # 完整下载到本地 :contentReference[oaicite:6]{index=6}
           ls -lh "$FILENAME"
+          # 将 FILENAME 写入后续步骤的环境
+          echo "FILENAME=${FILENAME}" >> $GITHUB_ENV  # 跨步骤共享 :contentReference[oaicite:7]{index=7}
 
-          # 将 FILENAME 持久化到后续步骤
-          echo "FILENAME=${FILENAME}" >> $GITHUB_ENV
-
-      - name: 🧪 安装并运行 payload_dumper
+      - name: 🧪 Install payload_dumper & extract
         env:
           EXTRACT_PARTITION: ${{ secrets.EXTRACT_PARTITION }}
         run: |
-          # 此时 FILENAME 已在环境中可用
-          echo "ℹ️  Extracting partition '${EXTRACT_PARTITION}' from ${FILENAME}"
-          
-          pip install --upgrade pip
-          pip install git+https://github.com/5ec1cff/payload-dumper
-
+          # 此时 FILENAME 在环境中可用
+          echo "🚀 Extracting '${EXTRACT_PARTITION}' from ${FILENAME}"
+          pip install --upgrade pip           # 升级 pip
+          pip install git+https://github.com/5ec1cff/payload-dumper  # 安装工具 :contentReference[oaicite:8]{index=8}
           OUT_DIR="extracted_${EXTRACT_PARTITION}"
           mkdir -p "$OUT_DIR"
+          payload_dumper --partitions "${EXTRACT_PARTITION}" "$FILENAME" --out "$OUT_DIR"  # 自动识别 ZIP 或 bin :contentReference[oaicite:9]{index=9}
 
-          payload_dumper --partitions "${EXTRACT_PARTITION}" "$FILENAME" --out "$OUT_DIR"
-
-      - name: 📦 上传提取结果
+      - name: 📦 Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: extracted-${{ secrets.EXTRACT_PARTITION }}
