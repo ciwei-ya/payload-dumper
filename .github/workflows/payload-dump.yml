@@ -11,34 +11,35 @@ jobs:
       - name: 🛎️ Checkout code
         uses: actions/checkout@v3
 
-      - name: 🧰 Install dependencies
+      - name: 🧰 Install tools
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip curl
 
-      - name: 💾 Download file and persist name
+      - name: 💾 Download file & persist name
         env:
           URL: ${{ secrets.URL }}
         run: |
-          # 提取 URL 末尾的文件名（含扩展名）
-          FILENAME="${URL##*/}"  
+          # 1. 提取原始文件名（含扩展名）
+          FILENAME="${URL##*/}"
           echo "⬇️ Downloading $URL → $FILENAME"
-          curl -L "$URL" -o "$FILENAME"        # 完整下载到本地 :contentReference[oaicite:6]{index=6}
+          # 2. 完整下载，避免流式读取问题
+          curl -L "$URL" -o "$FILENAME"           # 避免服务器不支持 Range :contentReference[oaicite:9]{index=9}
           ls -lh "$FILENAME"
-          # 将 FILENAME 写入后续步骤的环境
-          echo "FILENAME=${FILENAME}" >> $GITHUB_ENV  # 跨步骤共享 :contentReference[oaicite:7]{index=7}
+          # 3. 持久化文件名到后续步骤
+          echo "FILENAME=${FILENAME}" >> $GITHUB_ENV  # 跨步骤共享 
 
-      - name: 🧪 Install payload_dumper & extract
+      - name: 🧪 Install & run payload_dumper
         env:
           EXTRACT_PARTITION: ${{ secrets.EXTRACT_PARTITION }}
         run: |
-          # 此时 FILENAME 在环境中可用
           echo "🚀 Extracting '${EXTRACT_PARTITION}' from ${FILENAME}"
-          pip install --upgrade pip           # 升级 pip
-          pip install git+https://github.com/5ec1cff/payload-dumper  # 安装工具 :contentReference[oaicite:8]{index=8}
+          pip install --upgrade pip
+          pip install git+https://github.com/5ec1cff/payload-dumper  # 安装最新版工具 :contentReference[oaicite:11]{index=11}
           OUT_DIR="extracted_${EXTRACT_PARTITION}"
           mkdir -p "$OUT_DIR"
-          payload_dumper --partitions "${EXTRACT_PARTITION}" "$FILENAME" --out "$OUT_DIR"  # 自动识别 ZIP 或 bin :contentReference[oaicite:9]{index=9}
+          # 传入本地文件，工具会根据扩展名自动解析 ZIP 或 bin
+          payload_dumper --partitions "${EXTRACT_PARTITION}" "${FILENAME}" --out "$OUT_DIR"
 
       - name: 📦 Upload artifact
         uses: actions/upload-artifact@v4
