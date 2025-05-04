@@ -16,29 +16,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-pip curl
 
-      - name: 💾 下载文件（保留原始扩展名）
+      - name: 💾 下载文件（保留扩展名并写入环境） 
         env:
           URL: ${{ secrets.URL }}
         run: |
-          # 从 URL 提取文件名（含扩展名）
+          # 提取文件名
           FILENAME="${URL##*/}"
           echo "⬇️  Downloading from $URL → $FILENAME"
           curl -L "$URL" -o "$FILENAME"
           ls -lh "$FILENAME"
 
+          # 将 FILENAME 持久化到后续步骤
+          echo "FILENAME=${FILENAME}" >> $GITHUB_ENV
+
       - name: 🧪 安装并运行 payload_dumper
         env:
           EXTRACT_PARTITION: ${{ secrets.EXTRACT_PARTITION }}
         run: |
+          # 此时 FILENAME 已在环境中可用
+          echo "ℹ️  Extracting partition '${EXTRACT_PARTITION}' from ${FILENAME}"
+          
           pip install --upgrade pip
           pip install git+https://github.com/5ec1cff/payload-dumper
 
           OUT_DIR="extracted_${EXTRACT_PARTITION}"
           mkdir -p "$OUT_DIR"
 
-          echo "🚀 Extracting partition '${EXTRACT_PARTITION}' from $FILENAME"
-          # 直接传入保留扩展名的文件，让 payload_dumper 自动识别 ZIP 或 payload.bin
-          payload_dumper --partitions "${EXTRACT_PARTITION}" "$FILENAME" --out "$OUT_DIR"  # :contentReference[oaicite:0]{index=0}
+          payload_dumper --partitions "${EXTRACT_PARTITION}" "$FILENAME" --out "$OUT_DIR"
 
       - name: 📦 上传提取结果
         uses: actions/upload-artifact@v4
