@@ -11,18 +11,18 @@ jobs:
       - name: 🛎️ 检出代码
         uses: actions/checkout@v3
 
-      - name: 🧰 安装依赖
+      - name: 🧰 安装依赖工具
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip curl
 
-      - name: 💾 下载完整文件
+      - name: 💾 下载 ZIP 文件
         env:
           URL: ${{ secrets.URL }}
         run: |
-          echo "⬇️  Downloading from $URL to payload.bin"
-          curl -L "${URL}" -o payload.bin
-          ls -lh payload.bin
+          echo "⬇️  Downloading from $URL to ota.zip"
+          curl -L "${URL}" -o ota.zip
+          ls -lh ota.zip
 
       - name: 🧪 安装并运行 payload_dumper
         env:
@@ -31,9 +31,9 @@ jobs:
           pip install --upgrade pip
           pip install git+https://github.com/5ec1cff/payload-dumper
           mkdir -p extracted_${EXTRACT_PARTITION}
-          echo "🚀 Extracting partition ${EXTRACT_PARTITION} from payload.bin"
-          # 注意这里传入的是本地文件 payload.bin，而不是 URL
-          payload_dumper --partitions "${EXTRACT_PARTITION}" payload.bin --out extracted_${EXTRACT_PARTITION}
+          echo "🚀 Extracting partition '${EXTRACT_PARTITION}' from ota.zip"
+          # 直接对 ZIP 调用，工具会在内部定位并解析 payload.bin
+          payload_dumper --partitions "${EXTRACT_PARTITION}" ota.zip --out extracted_${EXTRACT_PARTITION}
 
       - name: 📦 上传提取结果
         uses: actions/upload-artifact@v4
