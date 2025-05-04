@@ -11,7 +11,7 @@ jobs:
       - name: 🛎️ 检出代码
         uses: actions/checkout@v3
 
-      - name: 🧰 安装 Python 和 curl
+      - name: 🧰 安装工具
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip curl
@@ -21,13 +21,20 @@ jobs:
           URL: ${{ secrets.URL }}
           EXTRACT_PARTITION: ${{ secrets.EXTRACT_PARTITION }}
         run: |
+          # 安装 payload-dumper
           pip install --upgrade pip
           pip install git+https://github.com/5ec1cff/payload-dumper
-          mkdir -p extracted_${EXTRACT_PARTITION}
-          payload_dumper --partitions ${EXTRACT_PARTITION} ${URL} --out extracted_${EXTRACT_PARTITION}
+
+          # 统一使用连字符目录名
+          OUTPUT_DIR="extracted-${EXTRACT_PARTITION}"
+          mkdir -p "${OUTPUT_DIR}"
+
+          # 从 URL 直接提取分区
+          payload_dumper --partitions "${EXTRACT_PARTITION}" "${URL}" --out "${OUTPUT_DIR}"
 
       - name: 📦 上传提取结果
         uses: actions/upload-artifact@v4
         with:
           name: extracted-${{ secrets.EXTRACT_PARTITION }}
           path: extracted-${{ secrets.EXTRACT_PARTITION }}
+          if-no-files-found: error
