@@ -11,20 +11,29 @@ jobs:
       - name: 🛎️ 检出代码
         uses: actions/checkout@v3
 
-      - name: 🧰 安装 Python 和 curl
+      - name: 🧰 安装依赖
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip curl
 
-      - name: 🧪 提取指定分区
+      - name: 💾 下载完整文件
         env:
           URL: ${{ secrets.URL }}
+        run: |
+          echo "⬇️  Downloading from $URL to payload.bin"
+          curl -L "${URL}" -o payload.bin
+          ls -lh payload.bin
+
+      - name: 🧪 安装并运行 payload_dumper
+        env:
           EXTRACT_PARTITION: ${{ secrets.EXTRACT_PARTITION }}
         run: |
           pip install --upgrade pip
           pip install git+https://github.com/5ec1cff/payload-dumper
           mkdir -p extracted_${EXTRACT_PARTITION}
-          payload_dumper --partitions ${EXTRACT_PARTITION} ${URL} --out extracted_${EXTRACT_PARTITION}
+          echo "🚀 Extracting partition ${EXTRACT_PARTITION} from payload.bin"
+          # 注意这里传入的是本地文件 payload.bin，而不是 URL
+          payload_dumper --partitions "${EXTRACT_PARTITION}" payload.bin --out extracted_${EXTRACT_PARTITION}
 
       - name: 📦 上传提取结果
         uses: actions/upload-artifact@v4
