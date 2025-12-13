@@ -1,25 +1,28 @@
 # payload dumper of online
 
-这是一个修改版的 payload dumper ，除了具有它原先支持的功能，还支持以下特性：
+[中文](docs/README.zh-CN.md)
 
-1. 从包含 payload.bin 的 zip 归档中直接提取分区，而无需解压。  
-2. 从来自网络的包含 payload.bin （的 zip 归档）的 url （如 OTA 更新地址）直接提取分区，而无需下载整个文件。
+This is a modified version of payload dumper that supports the following features in addition to the original features:
 
-借助该脚本，你只需要少量的时间和存储空间就能从 OTA 更新包或地址中提取你想要的分区，尤其是比较小的分区，如 boot, init_boot, vbmeta 等。
+1. Extract partitions directly from a zip archive containing payload.bin without unzipping it.   
+2. Extract partitions directly from a URL (such as an OTA update URL) containing payload.bin from the network without downloading the entire file.  
+3. Multithreaded downloading and extraction.
 
-未来展望：也许可以让它支持提取系统分区中的部分文件？
+With this script, you only need a small amount of time and storage space to extract the partitions you want from the OTA update package or address, especially the smaller partitions such as boot, init_boot, vbmeta, etc.
 
-## 用法
+Future Outlook: Maybe it can support extracting some files in system partitions?
+
+## usage
 
 ```bash
 pip install git+https://github.com/5ec1cff/payload-dumper
-payload_dumper --partitions <需要dump的分区> <文件路径或 url>
+payload_dumper --partitions <partitions you need> <file path or url>
 ```
 ---
 
 # payload dumper
 
-转储 Android 更新镜像中的 `payload.bin` 镜像。由于使用了多进程，性能比其他工具有明显提高。
+Dumps the `payload.bin` image found in Android update images. Has significant performance gains over other tools due to using multiprocessing.
 
 ## Installation
 
@@ -30,23 +33,35 @@ payload_dumper --partitions <需要dump的分区> <文件路径或 url>
 
 ## Usage
 
-### 转储整个 `payload.bin` 文件
+### Dumping the entirety of `payload.bin`
 
 ```bash
 payload_dumper payload.bin
 ```
 
-### 转储特定分区
+### Dumping specific partitions
 
-使用逗号分隔的要转储的分区列表：
+Use a comma-separated list of partitions to dump:
 ```bash
 payload_dumper --partitions boot,dtbo,vendor payload.bin
 ```
 
+### Patching older image with OTA
 
-### 使用 OTA 修补旧镜像
-
-假设旧分区位于名为 `old/` 的目录中：
+Assuming the old partitions are in a directory named `old/`:
 ```bash
 payload_dumper --diff payload.bin
 ```
+
+## Developing
+
+```shell
+git clone https://github.com/5ec1cff/payload-dumper
+# run
+cd src
+python -m payload_dumper
+# install
+cd ..
+pip install .
+```
+
