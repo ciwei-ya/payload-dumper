@@ -2,6 +2,18 @@ name: Dump Payload from URL
 
 on:
   workflow_dispatch:
+    inputs:
+      URL:
+        description: '下载链接'
+        required: true
+        type: string
+      EXTRACT_PARTITION:
+        description: '提取分区'
+        required: true
+        type: string
+        default: boot,init_boot
+
+
 
 jobs:
   dump:
@@ -18,8 +30,8 @@ jobs:
 
       - name: 🧪 提取指定分区
         env:
-          URL: ${{ secrets.URL }}
-          EXTRACT_PARTITION: ${{ secrets.EXTRACT_PARTITION }}
+          URL: ${{ inputs.URL }}
+          EXTRACT_PARTITION: ${{ inputs.EXTRACT_PARTITION }}
         run: |
           # 安装 payload-dumper
           pip install --upgrade pip
